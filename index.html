@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Table</title>
+</head>
+<style>
+    body {
+        font-family: arial, sans-serif;
+        text-align: center;
+    }
+    h2 {
+        color: chocolate;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        text-transform: capitalize;
+    }
+    th {
+        background-color: #b7c1f1;
+        position: sticky;
+        top: 0;
+    }
+    td, th {
+        border: 1px solid lightgray;
+        padding: 8px;
+    }
+    tr:nth-child(odd) {
+        background-color: #f1f1f1;
+    }
+    .clickable {
+        cursor: pointer;
+    }
+    .no-result {
+        border: 1px solid lightgray;
+        padding: 10px;
+        color: lightcoral;
+    }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<body>
+
+<marquee width="100%" direction="left">
+    এই ওয়েবসাইটে পূর্ব রেলের অফিসিয়াল ওয়েবসাইট দ্বারা সাধারণ ব্যবহারের জন্য পেট্রোল বিশেষ ট্রেনের বিবরণ রয়েছে। ফিল্টার করার জন্য দুটি স্টেশনের নাম ক্লিক করুন।
+</marquee>
+<div ng-app="time-table" ng-controller="search-train">
+    <div ng-repeat="table in tables">
+        <h2>{{table.heading}}</h2>
+        <table>
+            <tr>
+              <th>Trains</th>
+              <th ng-repeat="station in table.stations" 
+                    class="clickable" 
+                    ng-click="filterByStation(table.id, station)" 
+                    ng-style="{'background-color': isVisible(table.stationFilters, station, false) ? 'yellow' : ''}">
+                    {{station}}
+                </th>
+            </tr>
+            <tr ng-repeat="train in table.trains" ng-if="isVisible(table.routeFilters, train.routeId, true)">
+              <td ng-style="{'background-color': train.isImportant ? 'yellow':''}">{{train.routeId}}</td>
+              <td ng-repeat="time in train.timeList track by $index" ng-style="{'background-color': time === '' ? 'darkgray':''}">{{time}}</td>
+            </tr>
+        </table>
+        <div class="no-result" ng-if="table.routeFilters.length > 0 && table.routeFilters[0] === 'no-route'">
+            There have no direct train between {{table.stationFilters[0]}} and {{table.stationFilters[1]}}. Please select different stations.
+        </div>
+    </div>
+</div>
+<p>Last updated on 15th Aug 2021. &#169; Chandan Koley</p>
+
+<script>
+var app = angular.module('time-table', []);
+app.controller('search-train', function($scope) {
+
+    const ROUTE_MAP = {
+        'howrah-bardhaman-main': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'bandel', 'bardhaman-main'],
+        'howrah-bandel': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'bandel'],
+        'howrah-katwa': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'bandel', 'katwa'],
+        'howrah-sheoraphuli':  ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli'],
+        'howrah-arambagh': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'singur', 'kamarkundu-main', 'tarakeshwar', 'arambagh'],
+        'howrah-tarakeswar': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'singur', 'kamarkundu-main', 'tarakeshwar'],
+        'howrah-goghat': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'singur', 'kamarkundu-main', 'tarakeshwar', 'arambagh', 'goghat'],
+
+        'bardhaman-howrah-main': ["bardhaman-main", "bandel", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'bandel-howrah': ["bandel", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'katwa-howrah': ["katwa", "bandel", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'sheoraphuli-howrah':  ["sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'arambagh-howrah': ["arambagh", "tarakeshwar", "kamarkundu-main", "singur", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'tarakeswar-howrah': ["tarakeshwar", "kamarkundu-main", "singur", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+        'goghat-howrah': ["goghat", "arambagh", "tarakeshwar", "kamarkundu-main", "singur", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+
+        'howrah-bardhaman-chord': ['howrah', 'belur', 'bally', 'gobra', 'baruipara', 'kamarkundu-chord', 'bardhaman-chord'],
+        'bardhaman-howrah-chord': ['bardhaman-chord', 'kamarkundu-chord', 'baruipara', 'gobra', 'bally', 'belur', 'howrah']
+    };
+
+    const TIME_DIFF_MAP = {
+        'howrah': {
+            /*common in main and cord line*/
+            'howrah': {'h': 0, 'm': 0},
+            'belur': {'h': 0, 'm': 13},
+            'bally': {'h': 0, 'm': 16},
+
+            /*home station*/
+            'serampore': {'h': 0, 'm': 32},
+            'sheoraphuli': {'h': 0, 'm': 38},
+
+            /*tarakeswar route*/
+            'singur': {'h': 0, 'm': 53},
+            'kamarkundu-main': {'h': 0, 'm': 56},
+            'tarakeshwar': {'h': 1, 'm': 30},
+            'arambagh': {'h': 2, 'm': 10},
+            'goghat': {'h': 2, 'm': 40},
+
+            /*katwa route*/
+            'katwa': {'h': 3, 'm': 15},
+            
+            /*bardhaman main line*/
+            'bandel': {'h': 1, 'm': 2},
+            'bardhaman-main': {'h': 2, 'm': 22},
+
+            /*barbhaman chord line*/
+            'gobra': {'h': 0, 'm': 25},
+            'baruipara': {'h': 0, 'm': 36},
+            'kamarkundu-chord': {'h': 0, 'm': 46},
+            'bardhaman-chord': {'h': 2, 'm': 5},
+        },
+        'bardhaman-chord': {
+            'bardhaman-chord': {'h': 0, 'm': 0},
+            'kamarkundu-chord': {'h': 1, 'm': 5},
+            'baruipara': {'h': 1, 'm': 13},
+            'gobra': {'h': 1, 'm': 23},
+            'bally': {'h': 1, 'm': 40},
+            'belur': {'h': 1, 'm': 43},
+            'howrah': {'h': 2, 'm': 0},
+        },
+        'bardhaman-main': {
+            'bardhaman-main': {'h': 0, 'm': 0},
+            'bandel': {'h': 1, 'm': 15},
+            'sheoraphuli': {'h': 1, 'm': 38},
+            'serampore': {'h': 1, 'm': 41},
+            'bally': {'h': 1, 'm': 56},
+            'belur': {'h': 2, 'm': 0},
+            'howrah': {'h': 2, 'm': 20},
+        },
+        'bandel': {
+            'bandel': {'h': 0, 'm': 0},
+            'sheoraphuli': {'h': 0, 'm': 23},
+            'serampore': {'h': 0, 'm': 26},
+            'bally': {'h': 0, 'm': 41},
+            'belur': {'h': 0, 'm': 45},
+            'howrah': {'h': 1, 'm': 5},
+        },
+        'katwa': {
+            'katwa': {'h': 0, 'm': 0},
+            'bandel': {'h': 2, 'm': 10},
+            'sheoraphuli': {'h': 2, 'm': 33},
+            'serampore': {'h': 2, 'm': 36},
+            'bally': {'h': 2, 'm': 48},
+            'belur': {'h': 2, 'm': 52},
+            'howrah': {'h': 3, 'm': 12},
+        },
+        'sheoraphuli': {
+            'sheoraphuli': {'h': 0, 'm': 0},
+            'serampore': {'h': 0, 'm': 5},
+            'bally': {'h': 0, 'm': 20},
+            'belur': {'h': 0, 'm': 24},
+            'howrah': {'h': 0, 'm': 44},
+        },
+        'arambagh': {
+            'arambagh': {'h': 0, 'm': 0},
+            'tarakeshwar': {'h': 0, 'm': 45},
+            'kamarkundu-main': {'h': 1, 'm': 2},
+            'singur': {'h': 1, 'm': 5},
+            'sheoraphuli': {'h': 1, 'm': 30},
+            'serampore': {'h': 1, 'm': 41},
+            'bally': {'h': 1, 'm': 56},
+            'belur': {'h': 2, 'm': 0},
+            'howrah': {'h': 2, 'm': 20},
+        },
+        'tarakeshwar': {
+            'tarakeshwar': {'h': 0, 'm': 0},
+            'kamarkundu-main': {'h': 0, 'm': 25},
+            'singur': {'h': 0, 'm': 29},
+            'sheoraphuli': {'h': 0, 'm': 50},
+            'serampore': {'h': 0, 'm': 56},
+            'bally': {'h': 1, 'm': 11},
+            'belur': {'h': 1, 'm': 15},
+            'howrah': {'h': 1, 'm': 35},
+        },
+        'goghat': {
+            'goghat': {'h': 0, 'm': 0},
+            'arambagh': {'h': 0, 'm': 15},
+            'tarakeshwar': {'h': 1, 'm': 0},
+            'kamarkundu-main': {'h': 1, 'm': 25},
+            'singur': {'h': 1, 'm': 29},
+            'sheoraphuli': {'h': 1, 'm': 50},
+            'serampore': {'h': 1, 'm': 56},
+            'bally': {'h': 2, 'm': 11},
+            'belur': {'h': 2, 'm': 15},
+            'howrah': {'h': 2, 'm': 35},
+        }
+    };
+
+    $scope.tables = [
+        {
+            id: 'tab1',
+            heading: 'Howrah Main (UP)[Howrah to Bardhaman/ Bandel/ Katwa/ Sheoraphuli/ Arambagh/ Tarakeswar/ Goghat]',
+            stations: ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'singur', 'kamarkundu-main', 'tarakeshwar', 'arambagh', 'goghat', 'bandel', 'bardhaman-main', 'katwa'],
+            stationFilters: [],
+            routeFilters: [],
+            sortByStation: 'howrah',
+            trains: [
+                {routeId: 'howrah-bardhaman-main', startTime: '04:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '05:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '08:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '09:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '11:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '12:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '14:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '18:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '19:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '19:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '22:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '22:55', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-bandel', startTime: '05:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '06:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '06:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '07:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '07:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '08:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '08:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '09:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '09:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '10:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '10:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '11:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '11:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '12:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '13:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '14:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '15:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '16:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '16:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '17:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '18:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '18:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '19:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '20:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '20:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '21:30', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-katwa', startTime: '10:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '12:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '14:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '16:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '17:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-sheoraphuli', startTime: '08:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-sheoraphuli', startTime: '15:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-sheoraphuli', startTime: '17:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-sheoraphuli', startTime: '18:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-sheoraphuli', startTime: '20:00', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-arambagh', startTime: '05:55', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '08:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '14:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '19:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '21:15', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-goghat', startTime: '04:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-goghat', startTime: '09:50', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'howrah-tarakeswar', startTime: '06:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '09:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '10:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '13:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '17:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '18:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '20:40', isImportant: false, timeList: [], sortByTime: ''},
+                
+            ]
+        },
+        {
+            id: 'tab2',
+            heading: 'Howrah Main (DOWN)[Bardhaman/ Bandel/ Katwa/ Sheoraphuli/ Arambagh/ Tarakeswar/ Goghat to Howrah]',
+            stations: ["katwa", "bardhaman-main", "bandel", "goghat", "arambagh", "tarakeshwar", "kamarkundu-main", "singur", "sheoraphuli", "serampore", "bally", "belur", "howrah"],
+            stationFilters: [],
+            routeFilters: [],
+            sortByStation: 'howrah',
+            trains: [
+                {routeId: 'bardhaman-howrah-main', startTime: '05:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '06:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '07:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '08:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '08:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '12:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '13:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '15:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '16:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '17:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '18:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '22:10', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'bandel-howrah', startTime: '04:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '04:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '05:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '06:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '08:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '08:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '08:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '08:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '09:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '09:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '09:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '10:25', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '11:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '12:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '13:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '14:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '14:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '15:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '15:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '16:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '17:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '19:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '20:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '21:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '22:00', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'katwa-howrah', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'katwa-howrah', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'katwa-howrah', startTime: '07:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'katwa-howrah', startTime: '13:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'katwa-howrah', startTime: '15:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'katwa-howrah', startTime: '19:20', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'sheoraphuli-howrah', startTime: '09:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'sheoraphuli-howrah', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'sheoraphuli-howrah', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'sheoraphuli-howrah', startTime: '19:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'sheoraphuli-howrah', startTime: '20:55', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'arambagh-howrah', startTime: '05:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '06:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '08:35', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '11:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '15:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '16:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '20:30', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'goghat-howrah', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'goghat-howrah', startTime: '13:00', isImportant: false, timeList: [], sortByTime: ''},
+
+                {routeId: 'tarakeswar-howrah', startTime: '05:35', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '07:55', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '08:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '09:30', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '10:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '15:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '16:30', isImportant: false, timeList: [], sortByTime: ''},
+            ]
+        },
+        {
+            id: 'tab3',
+            heading: 'Howrah Chord (UP)[Howrah to Bardhaman via chord]',
+            stations: ['howrah', 'belur', 'bally', 'gobra', 'baruipara', 'kamarkundu-chord', 'bardhaman-chord'],
+            stationFilters: [],
+            routeFilters: [],
+            sortByStation: 'howrah',
+            trains: [
+                {routeId: 'howrah-bardhaman-chord', startTime: '05:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '06:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '07:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '08:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '09:20', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '11:25', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '13:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '15:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '16:25', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '17:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '18:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '18:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '19:15', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '19:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '20:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-chord', startTime: '22:10', isImportant: false, timeList: [], sortByTime: ''}
+            ]
+        },
+        {
+            id: 'tab4',
+            heading: 'Howrah Chord (DOWN)[Bardhaman to Howrah via chord]',
+            stations: ['bardhaman-chord', 'kamarkundu-chord', 'baruipara', 'gobra', 'bally', 'belur', 'howrah'],
+            stationFilters: [],
+            routeFilters: [],
+            sortByStation: 'howrah',
+            trains: [
+                {routeId: 'bardhaman-howrah-chord', startTime: '05:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '05:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '07:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '08:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '08:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '09:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '11:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '13:10', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '14:00', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '16:00', isImportant: true, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '17:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '18:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '20:20', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '22:30', isImportant: false, timeList: [], sortByTime: ''},
+            ]
+        }
+    ];
+    
+    function generateTable() {
+        _.forEach($scope.tables, function(tableInfo) {
+            _.forEach(tableInfo.trains, function(trainInfo) {
+                let routeList = ROUTE_MAP[trainInfo.routeId];
+                let startingStation = routeList[0];
+                let tempTrainTimeList = {};
+                _.forEach(routeList, function(routeStation) {
+                    tempTrainTimeList[routeStation] = moment(trainInfo.startTime,'HH:mm').add(TIME_DIFF_MAP[startingStation][routeStation]).format('HH:mm');
+                });
+                trainInfo.sortByTime = tempTrainTimeList[tableInfo.sortByStation];
+                _.forEach(tableInfo.stations, function(station) {
+                    trainInfo.timeList.push(tempTrainTimeList[station] ? tempTrainTimeList[station] : '');
+                });
+            });
+            tableInfo.trains = _.sortBy(tableInfo.trains, function(train) {
+                return train.sortByTime;
+            });
+        });
+        //console.log("Table JSON::", $scope.tables);
+    };
+    generateTable();
+
+    $scope.filterByStation = function(tableId, station) {
+        let tableIndex = _.findIndex($scope.tables, {id: tableId});
+        let stationFilters = $scope.tables[tableIndex].stationFilters;
+        let exeFilterByRoute = false;
+        
+        if(_.indexOf(stationFilters, station) >= 0) {   /*remove station filter from the list*/
+            $scope.tables[tableIndex].stationFilters = _.remove(stationFilters, function(item){return item !== station});
+            exeFilterByRoute = true;
+        } else if (stationFilters.length < 2) {     /*add station filter in the list*/
+            $scope.tables[tableIndex].stationFilters.push(station);
+            exeFilterByRoute = true;
+        }
+        
+        if(exeFilterByRoute) {
+            $scope.tables[tableIndex].routeFilters = _.reduce(ROUTE_MAP, function(memo, routeStations, routeName) {
+                if(_.intersection(routeStations, $scope.tables[tableIndex].stationFilters).length >= $scope.tables[tableIndex].stationFilters.length) {
+                    memo.push(routeName);
+                }
+                return memo;
+            }, []);
+            if($scope.tables[tableIndex].stationFilters.length === 2 && !$scope.tables[tableIndex].routeFilters.length) {
+                $scope.tables[tableIndex].routeFilters = ['no-route'];
+            }
+        }
+    };
+
+    $scope.isVisible = function(list, item, defaultFlag) {
+        if(list.length) {
+            return _.indexOf(list, item) >= 0
+        } else {
+            return defaultFlag;
+        }
+    }
+
+});
+</script>
+
+</body>
+</html>
