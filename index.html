@@ -36,6 +36,12 @@
         padding: 10px;
         color: lightcoral;
     }
+    .feedback {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        font-size: 40px;
+    }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -67,12 +73,13 @@
             There have no direct train between {{table.stationFilters[0]}} and {{table.stationFilters[1]}}. Please select different stations.
         </div>
     </div>
+    <p>Last updated on 15th Aug 2021. &#169; Chandan Koley</p>
+    <button class="feedback" ng-click="sendMail()">Share Feedback</button>
 </div>
-<p>Last updated on 1st Sep 2021. &#169; Chandan Koley</p>
 
 <script>
 var app = angular.module('time-table', []);
-app.controller('search-train', function($scope) {
+app.controller('search-train', function($scope, $window) {
 
     const ROUTE_MAP = {
         'howrah-bardhaman-main': ['howrah', 'belur', 'bally', 'serampore', 'sheoraphuli', 'bandel', 'bardhaman-main'],
@@ -491,6 +498,14 @@ app.controller('search-train', function($scope) {
         } else {
             return defaultFlag;
         }
+    }
+
+    $scope.message = {
+    	subject: "Time-table feedback email",
+        content: "Share your valuable message"
+    }
+	$scope.sendMail = function() {
+        $window.open('mailto:chandank375@gmail.com?subject=' + $scope.message.subject + '&body=' + $scope.message.content);
     }
 
 });
