@@ -45,7 +45,7 @@
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <body>
 
 <marquee width="100%" direction="left">
@@ -73,8 +73,8 @@
             There have no direct train between {{table.stationFilters[0]}} and {{table.stationFilters[1]}}. Please select different stations.
         </div>
     </div>
-    <p>Last updated on 15th Aug 2021. &#169; Chandan Koley</p>
-    <button class="feedback" ng-click="sendMail()">Share Feedback</button>
+    <p>Last updated on 14th Sep 2021. &#169; Chandan Koley</p>
+    <button class="feedback" ng-click="sendMail()">Send Feedback</button>
 </div>
 
 <script>
@@ -228,6 +228,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'howrah-bardhaman-main', startTime: '11:25', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bardhaman-main', startTime: '12:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bardhaman-main', startTime: '14:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bardhaman-main', startTime: '16:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bardhaman-main', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bardhaman-main', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bardhaman-main', startTime: '18:30', isImportant: false, timeList: [], sortByTime: ''},
@@ -242,6 +243,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'howrah-bandel', startTime: '06:45', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '07:05', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '07:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '08:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '08:20', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '08:45', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '09:00', isImportant: false, timeList: [], sortByTime: ''},
@@ -253,6 +255,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'howrah-bandel', startTime: '12:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '13:15', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '14:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-bandel', startTime: '15:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '15:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '16:15', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-bandel', startTime: '16:45', isImportant: false, timeList: [], sortByTime: ''},
@@ -270,6 +273,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'howrah-katwa', startTime: '16:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-katwa', startTime: '17:05', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-katwa', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-katwa', startTime: '19:25', isImportant: false, timeList: [], sortByTime: ''},
 
                 {routeId: 'howrah-sheoraphuli', startTime: '08:10', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-sheoraphuli', startTime: '15:50', isImportant: false, timeList: [], sortByTime: ''},
@@ -280,19 +284,22 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'howrah-arambagh', startTime: '05:55', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '08:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '13:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '14:10', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '14:50', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-arambagh', startTime: '16:25', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '17:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'howrah-arambagh', startTime: '19:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-arambagh', startTime: '21:15', isImportant: false, timeList: [], sortByTime: ''},
 
                 {routeId: 'howrah-goghat', startTime: '04:20', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-goghat', startTime: '09:50', isImportant: false, timeList: [], sortByTime: ''},
 
+                {routeId: 'howrah-tarakeswar', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '06:50', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '09:05', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '10:50', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'howrah-tarakeswar', startTime: '13:05', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'howrah-tarakeswar', startTime: '11:40', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '17:40', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '18:40', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'howrah-tarakeswar', startTime: '20:40', isImportant: false, timeList: [], sortByTime: ''},
@@ -322,6 +329,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'bardhaman-howrah-main', startTime: '17:25', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-main', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-main', startTime: '18:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-main', startTime: '19:55', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-main', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-main', startTime: '22:10', isImportant: false, timeList: [], sortByTime: ''},
 
@@ -335,6 +343,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'bandel-howrah', startTime: '08:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '08:50', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '09:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '09:10', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '09:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '09:50', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '10:25', isImportant: true, timeList: [], sortByTime: ''},
@@ -345,6 +354,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'bandel-howrah', startTime: '14:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '15:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '15:40', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bandel-howrah', startTime: '16:05', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '16:40', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '17:45', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '19:00', isImportant: false, timeList: [], sortByTime: ''},
@@ -352,6 +362,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'bandel-howrah', startTime: '21:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bandel-howrah', startTime: '22:00', isImportant: false, timeList: [], sortByTime: ''},
 
+                {routeId: 'katwa-howrah', startTime: '05:40', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'katwa-howrah', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'katwa-howrah', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'katwa-howrah', startTime: '07:45', isImportant: false, timeList: [], sortByTime: ''},
@@ -369,10 +380,12 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'arambagh-howrah', startTime: '06:15', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'arambagh-howrah', startTime: '08:35', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'arambagh-howrah', startTime: '11:00', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'arambagh-howrah', startTime: '15:30', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'arambagh-howrah', startTime: '16:45', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'arambagh-howrah', startTime: '18:00', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'arambagh-howrah', startTime: '20:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '13:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '16:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '17:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '18:10', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '19:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'arambagh-howrah', startTime: '20:45', isImportant: false, timeList: [], sortByTime: ''},
 
                 {routeId: 'goghat-howrah', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'goghat-howrah', startTime: '13:00', isImportant: false, timeList: [], sortByTime: ''},
@@ -382,6 +395,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'tarakeswar-howrah', startTime: '08:45', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'tarakeswar-howrah', startTime: '09:30', isImportant: true, timeList: [], sortByTime: ''},
                 {routeId: 'tarakeswar-howrah', startTime: '10:45', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'tarakeswar-howrah', startTime: '11:15', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'tarakeswar-howrah', startTime: '15:15', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'tarakeswar-howrah', startTime: '16:30', isImportant: false, timeList: [], sortByTime: ''},
             ]
@@ -424,7 +438,7 @@ app.controller('search-train', function($scope, $window) {
             trains: [
                 {routeId: 'bardhaman-howrah-chord', startTime: '05:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '05:30', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'bardhaman-howrah-chord', startTime: '06:00', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '06:10', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '07:00', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '07:30', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '07:40', isImportant: false, timeList: [], sortByTime: ''},
@@ -439,7 +453,7 @@ app.controller('search-train', function($scope, $window) {
                 {routeId: 'bardhaman-howrah-chord', startTime: '18:45', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '20:20', isImportant: false, timeList: [], sortByTime: ''},
                 {routeId: 'bardhaman-howrah-chord', startTime: '21:00', isImportant: false, timeList: [], sortByTime: ''},
-                {routeId: 'bardhaman-howrah-chord', startTime: '22:30', isImportant: false, timeList: [], sortByTime: ''},
+                {routeId: 'bardhaman-howrah-chord', startTime: '22:00', isImportant: false, timeList: [], sortByTime: ''},
             ]
         }
     ];
